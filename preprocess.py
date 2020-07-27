@@ -52,11 +52,9 @@ def createTFIDFMatrix(data: pd.DataFrame):
     '''
 
     tfidf = TfidfVectorizer(ngram_range=(1, 1), min_df=0.0001, stop_words='english')
-    tfidf_matrix = tfidf.fit_transform(data['tag']).toarray()
+    tfidf_matrix = pd.DataFrame(tfidf.fit_transform(data['tag']).toarray())
+    tfidf_matrix.set_index(data['movieId'], inplace = True)
     return tfidf_matrix
-
-def reducingDimOfTFIDFMatrix(data):
-    pass
 
 
 ## Loading the data files
@@ -78,11 +76,11 @@ tags_grouped_df = groupMovieTags(tags_df)
 
 ## calculating the TFIDF matrix
 tfidf_matrix = createTFIDFMatrix(tags_grouped_df)
-print(type(tfidf_matrix))
-print(tfidf_matrix[0])
 
 ## dumping the tfidf matrix
 Util.saveObj(tfidf_matrix, 'tfidf_matrix')
 
 ## calculating the reduced TFIDF matrix
-tfidf_reduced_matrix = reducingDimOfTFIDFMatrix(tfidf_matrix)
+# tfidf_reduced_matrix = reducingDimOfTFIDFMatrix(tfidf_matrix)
+
+print(movies_df[movies_df['movieId'].isin([25885, 6272, 3113, 27019, 3159, 1725, 198, 122917, 2354, 0])])

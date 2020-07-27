@@ -10,52 +10,41 @@ print(tf.__version__)
 class AutoEncoder(keras.Model):
     def __init__(self):
         super(AutoEncoder, self).__init__(name = 'auto_encoder')
+        self.dropout_layer = keras.layers.Dropout(rate=0.1)
         self.EncoderDense1 = keras.layers.Dense(512, activation = tf.nn.relu)
-        self.EncoderDense2 = keras.layers.Dense(128, activation = tf.nn.relu)
-        self.BottleNeckDense = keras.layers.Dense(64, activation = tf.nn.relu)
-        self.DecoderDense1 = keras.layers.Dense(128, activation = tf.nn.relu)
+        self.EncoderDense2 = keras.layers.Dense(256, activation = tf.nn.relu)
+        self.BottleNeckDense = keras.layers.Dense(128, activation = tf.nn.relu)
+        self.DecoderDense1 = keras.layers.Dense(256, activation = tf.nn.relu)
         self.DecoderDense2 = keras.layers.Dense(512, activation = tf.nn.relu)
         self.FinalDense = keras.layers.Dense(1673, activation = tf.nn.relu)
 
     def call(self, input):
-        encoder_out_1 = self.EncoderDense1(input)
-        encoder_out_2 = self.EncoderDense2(encoder_out_1)
-        bottleneck_out = self.BottleNeckDense(encoder_out_2)
-        decoder_out_1 = self.DecoderDense1(bottleneck_out)
-        decoder_out_2 = self.DecoderDense2(decoder_out_1)
-        final_out =  self.FinalDense(decoder_out_2)
-        return final_out, bottleneck_out
+        encoder_out_1 = self.dropout_layer(self.EncoderDense1(input))
+        encoder_out_2 = self.dropout_layer(self.EncoderDense2(encoder_out_1))
+        bottleneck_out = self.dropout_layer(self.BottleNeckDense(encoder_out_2))
+        decoder_out_1 = self.dropout_layer(self.DecoderDense1(bottleneck_out))
+        decoder_out_2 = self.dropout_layer(self.DecoderDense2(decoder_out_1))
+        final_out =  self.dropout_layer(self.FinalDense(decoder_out_2))
+        return final_out
 
-NUM_EPOCHS = 100
+NUM_EPOCHS = 300
 BATCH_SIZE = 64
 
-X = Util.loadObj('tfidf_matrix')
-print(type(X))
-print(X.shape)
+tfidf_matrix =  Util.loadObj('tfidf_matrix')
+X = tfidf_matrix.to_numpy()
 
 model = AutoEncoder()
-optimizer = keras.optimizers.Adam(lr = 0.00003)
+optimizer = keras.optimizers.Adam(lr = 0.000003)
 global_step = tf.Variable(0)
 loss = lambda x, x_hat: tf.reduce_sum(keras.losses.mean_squared_error(x, x_hat))
 
+model.compile(loss=loss, optimizer = optimizer, metrics=['mse'])
+model.fit(x = X, y = X, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS)
 
-for i in range(NUM_EPOCHS):
-    print("Epoch: {}".format(i))
-    np.random.shuffle(X)
-    for j in range(0, len(X), BATCH_SIZE):
-        x_in = X[j : j + BATCH_SIZE]
+reduced = model.BottleNeckDense(model.EncoderDense2(model.EncoderDense1(X)))
 
-        with tf.GradientTape() as tape:
-            x_out, bottleneck_out = model(x_in)
-            loss_ = loss(x_in, x_out)
-            grads = tape.gradient(loss_, model.trainable_variables)
-
-
-        optimizer.apply_gradients(zip(grads, model.trainable_variables), global_step)
-
-    X_hat, _ = model(X)
-    # print(len(loss(X, X_hat).numpy()))
-    print("Epoch: {}, Loss: {:.4f}".format(i, loss(X, X_hat).numpy()))
-
-_, reduced = model(X)
-Util.saveObj(reduced, 'tfidf_reduced_matrix')
+reduced_np = reduced.numpy()
+indices = tfidf_matrix.index.tolist()
+reduced_np_df = pd.DataFrame(reduced_np)
+reduced_np_df.index = indices
+Util.saveObj(reduced_np_df, 'tfidf_reduced_matrix')
