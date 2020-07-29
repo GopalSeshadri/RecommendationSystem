@@ -18,9 +18,9 @@ class ContentFilter:
         top10 = np.argpartition(similarity_scores, -10)[-10:]
         return top10
 
-tfidf_embeddings = Util.loadObj('tfidf_reduced_matrix')
-## Have to append other embeddings
-embeddings_matrix =  tfidf_embeddings.to_numpy()
-current = [embeddings_matrix[0]]
-cf = ContentFilter(embeddings_matrix, current)
-print(tfidf_embeddings.index[cf.getTop10()])
+# tfidf_embeddings = Util.loadObj('tfidf_reduced_matrix')
+# ## Have to append other embeddings
+# embeddings_matrix =  tfidf_embeddings.to_numpy()
+# current = [embeddings_matrix[0]]
+# cf = ContentFilter(embeddings_matrix, current)
+# print(tfidf_embeddings.index[cf.getTop10()])

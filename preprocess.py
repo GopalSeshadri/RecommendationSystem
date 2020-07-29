@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import nltk
+import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition.pca import PCA
 from sklearn.decomposition.truncated_svd import TruncatedSVD
@@ -56,12 +56,23 @@ def createTFIDFMatrix(data: pd.DataFrame):
     tfidf_matrix.set_index(data['movieId'], inplace = True)
     return tfidf_matrix
 
+def preprocessImdbFile():
+    filename = '\Data\imdb.csv'
+    df = pd.read_csv('Data/imdb.csv'.format(filename))
+    df.columns = ['index', 'movieId', 'title', 'oneLiner', 'director', 'cast1', 'cast2', 'cast3']
+    df.set_index('index', inplace = True)
+    df.to_csv('Data/imdb.csv')
+    return df
+
+
 
 ## Loading the data files
 links_df = loadFile("links")
 movies_df = loadFile("movies")
 ratings_df = loadFile("ratings")
 tags_df = loadFile("tags")
+
+imdb_df = preprocessImdbFile()
 
 ## Making movieId and userId to start from zero
 links_df['movieId'] = links_df['movieId'] - 1
@@ -80,7 +91,7 @@ tfidf_matrix = createTFIDFMatrix(tags_grouped_df)
 ## dumping the tfidf matrix
 Util.saveObj(tfidf_matrix, 'tfidf_matrix')
 
-## calculating the reduced TFIDF matrix
-# tfidf_reduced_matrix = reducingDimOfTFIDFMatrix(tfidf_matrix)
+## loading the reduced TFIDF matrix
+tfidf_matrix_reduced =  Util.loadObj('tfidf_matrix')
 
 print(movies_df[movies_df['movieId'].isin([25885, 6272, 3113, 27019, 3159, 1725, 198, 122917, 2354, 0])])
