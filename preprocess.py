@@ -6,8 +6,11 @@ from sklearn.decomposition.pca import PCA
 from sklearn.decomposition.truncated_svd import TruncatedSVD
 import tensorflow as tf
 import tensorflow.keras as keras
+import spacy
 
 from utilities import Util
+
+nlp = spacy.load("en_core_web_md")
 
 
 def loadFile(filename: str):
@@ -48,13 +51,13 @@ def createTFIDFMatrix(data: pd.DataFrame):
     data (DataFrame) : The DataFrame with tags grouped by each movieId.
 
     Returns:
-    tfidf_matrix (DataFrame) : A matrix of dimension (1572, 723).
+    tfidf_df (DataFrame) : A matrix of dimension (1572, 723).
     '''
 
     tfidf = TfidfVectorizer(ngram_range=(1, 1), min_df=0.0001, stop_words='english')
-    tfidf_matrix = pd.DataFrame(tfidf.fit_transform(data['tag']).toarray())
-    tfidf_matrix.set_index(data['movieId'], inplace = True)
-    return tfidf_matrix
+    tfidf_df = pd.DataFrame(tfidf.fit_transform(data['tag']).toarray())
+    tfidf_df.set_index(data['movieId'], inplace = True)
+    return tfidf_df
 
 def preprocessImdbFile():
     filename = '\Data\imdb.csv'
@@ -63,6 +66,27 @@ def preprocessImdbFile():
     df.set_index('index', inplace = True)
     df.to_csv('Data/imdb.csv')
     return df
+
+def createSentenceVector(data: pd.DataFrame):
+    sentences = data['oneLiner'].tolist()
+    stopwords = nlp.Defaults.stop_words
+    sentence_dict = {}
+
+    for i, sentence in enumerate(sentences):
+        if sentence != "":
+            word_vector_list = []
+            for token in nlp(sentence):
+                if token.text not in stopwords and token.pos_  not in ('PUNCT', 'NUM', 'SYM'):
+                    word_vector_list.append(token.vector)
+            sentence_dict[data.iloc[i]['movieId']] = np.mean(word_vector_list, axis = 0)
+            # print(type(sentence_dict))
+
+
+    vector_df =  pd.DataFrame.from_dict(sentence_dict).T
+    vector_df = pd.concat([data['movieId'].reset_index(drop=True), vector_df.reset_index(drop=True)], axis = 1)
+    return vector_df
+
+
 
 
 
@@ -83,15 +107,34 @@ tags_df['movieId'] = tags_df['movieId'] - 1
 tags_df['userId'] = tags_df['userId'] - 1
 
 ## grouping the tags for each movie
-tags_grouped_df = groupMovieTags(tags_df)
+grouped_df = groupMovieTags(tags_df)
+
+## getting the genre tags for each movie
+movies2_df = movies_df.iloc[:][['movieId', 'genres']]
+movies2_df['genres'] = movies2_df['genres'].apply(lambda x: x.replace('|', ' '))
+
+## combining the genre tags and the user tags
+movies2_df = movies2_df.merge(grouped_df, on = 'movieId', how = 'left')
+movies2_df['tag'] = movies2_df['tag'].apply(lambda x: str(x)) + ' ' + movies2_df['genres']
+movies2_df['tag'] = movies2_df['tag'].apply(lambda x : x.replace('nan', '').strip())
+tags_grouped_df = movies2_df.iloc[:][['movieId', 'tag']]
+print(tags_grouped_df.shape)
 
 ## calculating the TFIDF matrix
-tfidf_matrix = createTFIDFMatrix(tags_grouped_df)
+tfidf_df = createTFIDFMatrix(tags_grouped_df)
+print(tfidf_df.shape)
 
 ## dumping the tfidf matrix
-Util.saveObj(tfidf_matrix, 'tfidf_matrix')
+Util.saveObj(tfidf_df, 'tfidf_df')
 
 ## loading the reduced TFIDF matrix
-tfidf_matrix_reduced =  Util.loadObj('tfidf_matrix')
+# tfidf_reduced_df =  Util.loadObj('tfidf_reduced_df')
 
-print(movies_df[movies_df['movieId'].isin([25885, 6272, 3113, 27019, 3159, 1725, 198, 122917, 2354, 0])])
+## loading imdb df with spacy sentence vector
+vector_df = createSentenceVector(imdb_df)
+print(vector_df.shape)
+
+## dumping the vector df
+Util.saveObj(vector_df, 'vector_df')
+
+# print(movies_df[movies_df['movieId'].isin([25885, 6272, 3113, 27019, 3159, 1725, 198, 122917, 2354, 0])])
