@@ -20,7 +20,7 @@ class ContentFilter:
         top10 = np.argpartition(similarity_scores, -10)[-10:]
         return top10
 
-embeddings = Util.loadObj('vector_df')
+embeddings = Util.loadObj('final_vector_df')
 embeddings_matrix =  embeddings.loc[:, embeddings.columns != 'movieId']
 embedding_movie_list = embeddings['movieId'].tolist()
 print(embeddings.shape)

@@ -56,7 +56,8 @@ def createTFIDFMatrix(data: pd.DataFrame):
 
     tfidf = TfidfVectorizer(ngram_range=(1, 1), min_df=0.0001, stop_words='english')
     tfidf_df = pd.DataFrame(tfidf.fit_transform(data['tag']).toarray())
-    tfidf_df.set_index(data['movieId'], inplace = True)
+    tfidf_df = pd.concat([data['movieId'].reset_index(drop = True), tfidf_df.reset_index(drop = True)], axis = 1)
+    tfidf_df.set_index('movieId', inplace = True)
     return tfidf_df
 
 def preprocessImdbFile():
@@ -106,51 +107,57 @@ imdb_df = preprocessImdbFile()
 # tags_df['movieId'] = tags_df['movieId'] - 1
 # tags_df['userId'] = tags_df['userId'] - 1
 
-# ## grouping the tags for each movie
-# grouped_df = groupMovieTags(tags_df)
-#
-# ## getting the genre tags for each movie
-# movies2_df = movies_df.iloc[:][['movieId', 'genres']]
-# movies2_df['genres'] = movies2_df['genres'].apply(lambda x: x.replace('|', ' ').lower())
-#
-# ## combining the genre tags and the user tags
-# movies2_df = movies2_df.merge(grouped_df, on = 'movieId', how = 'left')
-# movies2_df['tag'] = movies2_df['tag'].apply(lambda x: str(x)) + ' ' + movies2_df['genres']
-# movies2_df['tag'] = movies2_df['tag'].apply(lambda x : x.replace('nan', '').strip())
-# tags_grouped_df = movies2_df.iloc[:][['movieId', 'tag']]
-# print(tags_grouped_df.head())
-# print(tags_grouped_df.shape)
-#
-# ## calculating the TFIDF matrix
-# tfidf_df = createTFIDFMatrix(grouped_df)
-# print(tfidf_df.shape)
-#
-# ## dumping the tfidf matrix
-# Util.saveObj(tfidf_df, 'tfidf_df')
-#
-# ## loading the reduced TFIDF matrix
-# tfidf_reduced_df =  Util.loadObj('tfidf_reduced_df')
-# print(tfidf_reduced_df.shape)
+## grouping the tags for each movie
+grouped_df = groupMovieTags(tags_df)
+
+## getting the genre tags for each movie
+movies2_df = movies_df.iloc[:][['movieId', 'genres']]
+movies2_df['genres'] = movies2_df['genres'].apply(lambda x: x.replace('|', ' ').lower())
+
+## combining the genre tags and the user tags
+movies2_df = movies2_df.merge(grouped_df, on = 'movieId', how = 'left')
+movies2_df['tag'] = movies2_df['tag'].apply(lambda x: str(x)) + ' ' + movies2_df['genres']
+movies2_df['tag'] = movies2_df['tag'].apply(lambda x : x.replace('nan', '').strip())
+tags_grouped_df = movies2_df.iloc[:][['movieId', 'tag']]
+print(tags_grouped_df.head())
+print(tags_grouped_df.shape)
+
+## calculating the TFIDF matrix
+tfidf_df = createTFIDFMatrix(tags_grouped_df)
+print(tfidf_df.shape)
+
+## dumping the tfidf matrix
+Util.saveObj(tfidf_df, 'tfidf_df')
+
+## loading the reduced TFIDF matrix
+tfidf_reduced_df =  Util.loadObj('tfidf_reduced_df')
+print(tfidf_reduced_df.shape)
 
 # ## loading imdb df with spacy sentence vector
-vector_df = createSentenceVector(imdb_df)
+# vector_df = createSentenceVector(imdb_df)
+# print(vector_df.shape)
+#
+# ## dumping the vector df
+# Util.saveObj(vector_df, 'vector_df')
+
+vector_df =  Util.loadObj('vector_df')
 print(vector_df.shape)
 
-## dumping the vector df
-Util.saveObj(vector_df, 'vector_df')
+vector_df['movieId'] = vector_df['movieId'].apply(lambda x : int(x))
+tfidf_reduced_df['movieId'] = tfidf_reduced_df['movieId'].apply(lambda x : int(x))
+## merging tfidf reduced df and vector df
+final_vector_df = pd.merge(vector_df, tfidf_reduced_df, on = 'movieId', how = 'left')
+print(final_vector_df.shape)
+print(final_vector_df.isna().sum())
 
-# vector_df =  Util.loadObj('vector_df')
-# print(vector_df.shape)
+## dumping the final vector df
+Util.saveObj(final_vector_df, 'final_vector_df')
 
-# vector_df['movieId'] = vector_df['movieId'].apply(lambda x : int(x))
-# tfidf_reduced_df['movieId'] = tfidf_reduced_df['movieId'].apply(lambda x : int(x))
-# ## merging tfidf reduced df and vector df
-# final_vector_df = pd.merge(vector_df, tfidf_reduced_df, on = 'movieId', how = 'left')
-# print(final_vector_df.shape)
-# print(final_vector_df.isna().sum())
-#
-# ## dumping the final vector df
-# Util.saveObj(final_vector_df, 'final_vector_df')
+# print(True if 46855 in vector_df['movieId'].tolist() else False)
+# print(True if 46855 in tfidf_reduced_df['movieId'].tolist() else False)
+# print(True if 46855 in tfidf_df.index.tolist() else False)
+# print(True if 46855 in tags_grouped_df['movieId'].tolist() else False)
 
+print(movies_df[movies_df['movieId'].isin([143245, 27731, 95441, 1197, 885, 8934, 2798, 43869, 62336, 1])])
 
-print(movies_df[movies_df['movieId'].isin([43869, 93272, 476, 8934, 885, 55280, 1324, 175199, 2798, 1])])
+## 720 1107 2377 86668 176601

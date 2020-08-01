@@ -12,11 +12,11 @@ class AutoEncoder(keras.Model):
     def __init__(self, output_features):
         super(AutoEncoder, self).__init__(name = 'auto_encoder')
         self.dropout_layer = keras.layers.Dropout(rate=0.1)
-        self.EncoderDense1 = keras.layers.Dense(512, activation = tf.nn.relu)
-        self.EncoderDense2 = keras.layers.Dense(256, activation = tf.nn.relu)
-        self.BottleNeckDense = keras.layers.Dense(128, activation = tf.nn.relu)
-        self.DecoderDense1 = keras.layers.Dense(256, activation = tf.nn.relu)
-        self.DecoderDense2 = keras.layers.Dense(512, activation = tf.nn.relu)
+        self.EncoderDense1 = keras.layers.Dense(900, activation = tf.nn.relu)
+        self.EncoderDense2 = keras.layers.Dense(600, activation = tf.nn.relu)
+        self.BottleNeckDense = keras.layers.Dense(300, activation = tf.nn.relu)
+        self.DecoderDense1 = keras.layers.Dense(600, activation = tf.nn.relu)
+        self.DecoderDense2 = keras.layers.Dense(900, activation = tf.nn.relu)
         self.FinalDense = keras.layers.Dense(output_features, activation = tf.nn.relu)
 
     def call(self, input):
@@ -28,7 +28,7 @@ class AutoEncoder(keras.Model):
         final_out =  self.dropout_layer(self.FinalDense(decoder_out_2))
         return final_out
 
-NUM_EPOCHS = 60
+NUM_EPOCHS = 100
 BATCH_SIZE = 64
 
 tfidf_matrix =  Util.loadObj('tfidf_df')
