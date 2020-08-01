@@ -5,10 +5,11 @@ import tensorflow.keras as keras
 
 from utilities import Util
 
+tf.keras.backend.set_floatx('float64')
 print(tf.__version__)
 
 class AutoEncoder(keras.Model):
-    def __init__(self):
+    def __init__(self, output_features):
         super(AutoEncoder, self).__init__(name = 'auto_encoder')
         self.dropout_layer = keras.layers.Dropout(rate=0.1)
         self.EncoderDense1 = keras.layers.Dense(512, activation = tf.nn.relu)
@@ -16,7 +17,7 @@ class AutoEncoder(keras.Model):
         self.BottleNeckDense = keras.layers.Dense(128, activation = tf.nn.relu)
         self.DecoderDense1 = keras.layers.Dense(256, activation = tf.nn.relu)
         self.DecoderDense2 = keras.layers.Dense(512, activation = tf.nn.relu)
-        self.FinalDense = keras.layers.Dense(1673, activation = tf.nn.relu)
+        self.FinalDense = keras.layers.Dense(output_features, activation = tf.nn.relu)
 
     def call(self, input):
         encoder_out_1 = self.dropout_layer(self.EncoderDense1(input))
@@ -27,13 +28,14 @@ class AutoEncoder(keras.Model):
         final_out =  self.dropout_layer(self.FinalDense(decoder_out_2))
         return final_out
 
-NUM_EPOCHS = 300
+NUM_EPOCHS = 60
 BATCH_SIZE = 64
 
-tfidf_matrix =  Util.loadObj('tfidf_matrix')
+tfidf_matrix =  Util.loadObj('tfidf_df')
 X = tfidf_matrix.to_numpy()
+features = X.shape[1]
 
-model = AutoEncoder()
+model = AutoEncoder(features)
 optimizer = keras.optimizers.Adam(lr = 0.000003)
 global_step = tf.Variable(0)
 loss = lambda x, x_hat: tf.reduce_sum(keras.losses.mean_squared_error(x, x_hat))
@@ -45,6 +47,7 @@ reduced = model.BottleNeckDense(model.EncoderDense2(model.EncoderDense1(X)))
 
 reduced_np = reduced.numpy()
 indices = tfidf_matrix.index.tolist()
-reduced_np_df = pd.DataFrame(reduced_np)
-reduced_np_df.index = indices
-Util.saveObj(reduced_np_df, 'tfidf_reduced_matrix')
+tfidf_reduced_df = pd.DataFrame(reduced_np)
+tfidf_reduced_df['movieId'] = indices
+Util.saveObj(tfidf_reduced_df, 'tfidf_reduced_df')
+print(tfidf_reduced_df['movieId'])

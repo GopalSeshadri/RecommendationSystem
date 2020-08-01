@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 from utilities import Util
 
 class ContentFilter:
@@ -15,12 +16,18 @@ class ContentFilter:
 
     def getTop10(self):
         similarity_scores = self.calculateCosineSimilarity()
+        print(similarity_scores.shape)
         top10 = np.argpartition(similarity_scores, -10)[-10:]
         return top10
 
-# tfidf_embeddings = Util.loadObj('tfidf_reduced_matrix')
-# ## Have to append other embeddings
-# embeddings_matrix =  tfidf_embeddings.to_numpy()
-# current = [embeddings_matrix[0]]
-# cf = ContentFilter(embeddings_matrix, current)
-# print(tfidf_embeddings.index[cf.getTop10()])
+embeddings = Util.loadObj('vector_df')
+embeddings_matrix =  embeddings.loc[:, embeddings.columns != 'movieId']
+embedding_movie_list = embeddings['movieId'].tolist()
+print(embeddings.shape)
+print(embeddings_matrix.shape)
+# print(embeddings.isna().sum())
+current = [embeddings_matrix.iloc[0]]
+cf = ContentFilter(embeddings_matrix, current)
+top10_list = cf.getTop10().tolist()
+movie_list = [embedding_movie_list[each] for each in top10_list]
+print(movie_list)
