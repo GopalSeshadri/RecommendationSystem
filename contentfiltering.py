@@ -26,7 +26,7 @@ embedding_movie_list = embeddings['movieId'].tolist()
 print(embeddings.shape)
 print(embeddings_matrix.shape)
 # print(embeddings.isna().sum())
-current = [embeddings_matrix.iloc[0]]
+current = [embeddings_matrix.iloc[1]]
 cf = ContentFilter(embeddings_matrix, current)
 top10_list = cf.getTop10().tolist()
 movie_list = [embedding_movie_list[each] for each in top10_list]
