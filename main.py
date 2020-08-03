@@ -3,6 +3,7 @@ import pandas as pd
 
 from preprocess import Preprocess
 from utilities import Util
+from contentfiltering import ContentFilter
 
 ## Loading the data files
 links_df = Preprocess.loadFile("links")
@@ -74,3 +75,34 @@ print(movies_df[movies_df['movieId'].isin([5, 151, 163, 168, 186, 225, 315, 342,
 
 ## 5, 151, 163, 168, 186, 225, 315, 342, 466, 543, 552, 555, 596, 1234, 1376, 1396, 1639, 2302, 2395, 2699
 ## 183611, 6583, 40851, 9010, 6979, 1625, 102590, 6790, 179401, 2
+
+movies_watched_list = ratings_df[ratings_df['userId'] == 147]['movieId'].tolist()
+ratings_given_list = ratings_df[ratings_df['userId'] == 147]['rating'].tolist()
+sum_ratings_given = sum(ratings_given_list)
+rating_adjusted_list = [round(r/sum_ratings_given, 3) for r in ratings_given_list]
+
+print(movies_watched_list)
+print(sum_ratings_given)
+print(rating_adjusted_list)
+
+movie_600_list = []
+for i, m in enumerate(movies_watched_list):
+    movie_600 = final_vector_df[final_vector_df['movieId'] == m].iloc[:, 1:].to_numpy() * rating_adjusted_list[i]
+    # print(len(movie_600))
+    movie_600_list.append(movie_600[0])
+movie_600_final = np.sum(movie_600_list, axis = 0)
+
+
+embeddings = Util.loadObj('final_vector_df')
+embeddings_matrix =  embeddings.loc[:, embeddings.columns != 'movieId']
+embedding_movie_list = embeddings['movieId'].tolist()
+print(embeddings.shape)
+print(embeddings_matrix.shape)
+# print(embeddings.isna().sum())
+current = [movie_600_final]
+cf = ContentFilter(embeddings_matrix, current)
+top10_list = cf.getTop10().tolist()
+movie_list = [embedding_movie_list[each] for each in top10_list]
+print(movie_list)
+
+print(movies_df[movies_df['movieId'].isin(movie_list)])
