@@ -76,15 +76,19 @@ print(movies_df[movies_df['movieId'].isin([5, 151, 163, 168, 186, 225, 315, 342,
 ## 5, 151, 163, 168, 186, 225, 315, 342, 466, 543, 552, 555, 596, 1234, 1376, 1396, 1639, 2302, 2395, 2699
 ## 183611, 6583, 40851, 9010, 6979, 1625, 102590, 6790, 179401, 2
 
+## getting user rating history
 movies_watched_list = ratings_df[ratings_df['userId'] == 147]['movieId'].tolist()
 ratings_given_list = ratings_df[ratings_df['userId'] == 147]['rating'].tolist()
+
+
+if len(movies_watched_list) > 10:
+    movies_watched_list = movies_watched_list[-10:]
+    ratings_given_list = ratings_given_list[-10:]
+
 sum_ratings_given = sum(ratings_given_list)
 rating_adjusted_list = [round(r/sum_ratings_given, 3) for r in ratings_given_list]
 
-print(movies_watched_list)
-print(sum_ratings_given)
-print(rating_adjusted_list)
-
+## creating the 600 dimensional movie compound representation for the user
 movie_600_list = []
 for i, m in enumerate(movies_watched_list):
     movie_600 = final_vector_df[final_vector_df['movieId'] == m].iloc[:, 1:].to_numpy() * rating_adjusted_list[i]
@@ -92,7 +96,7 @@ for i, m in enumerate(movies_watched_list):
     movie_600_list.append(movie_600[0])
 movie_600_final = np.sum(movie_600_list, axis = 0)
 
-
+## finding the movie list for that user based on his compound embedding
 embeddings = Util.loadObj('final_vector_df')
 embeddings_matrix =  embeddings.loc[:, embeddings.columns != 'movieId']
 embedding_movie_list = embeddings['movieId'].tolist()
