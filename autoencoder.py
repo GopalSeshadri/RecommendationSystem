@@ -37,7 +37,6 @@ features = X.shape[1]
 
 model = AutoEncoder(features)
 optimizer = keras.optimizers.Adam(lr = 0.000003)
-global_step = tf.Variable(0)
 loss = lambda x, x_hat: tf.reduce_sum(keras.losses.mean_squared_error(x, x_hat))
 
 model.compile(loss=loss, optimizer = optimizer, metrics=['mse'])

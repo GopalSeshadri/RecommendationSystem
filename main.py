@@ -110,3 +110,7 @@ movie_list = [embedding_movie_list[each] for each in top10_list]
 print(movie_list)
 
 print(movies_df[movies_df['movieId'].isin(movie_list)])
+
+movie_list2 = [1036, 2791, 58559, 3868, 260, 38061, 1210, 57669, 54995, 296]
+
+print(movies_df[movies_df['movieId'].isin(movie_list2)])
