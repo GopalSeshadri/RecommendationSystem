@@ -111,6 +111,6 @@ print(movie_list)
 
 print(movies_df[movies_df['movieId'].isin(movie_list)])
 
-movie_list2 = [1036, 2791, 58559, 3868, 260, 38061, 1210, 57669, 54995, 296]
+movie_list2 = [29, 260, 750, 223, 3671, 1198, 2000, 4993, 1967, 55820]
 
 print(movies_df[movies_df['movieId'].isin(movie_list2)])

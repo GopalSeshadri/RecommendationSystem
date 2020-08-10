@@ -144,7 +144,7 @@ class MLP(keras.Model):
         return out
 
 class NeuMF(keras.Model):
-    def __init__(self):
+    def __init__(self, num_users, num_movies, num_latent, min_rating, max_rating):
         super(NeuMF, self).__init__(name = 'NeuMF')
 
         self.num_users = num_users
@@ -206,7 +206,7 @@ class NeuMF(keras.Model):
         lmf_mb = self.reshape_bias_layer(lmf_mb)
 
         lmf_x = self.lmf_dot_layer([lmf_uw, lmf_mw])
-        lmf_x = self.lmf_add_layer([lmf_x, ub, mb])
+        lmf_x = self.lmf_add_layer([lmf_x, lmf_ub, lmf_mb])
         lmf_x = self.sigmoid_layer(lmf_x)
 
         ## MLP layers
@@ -241,10 +241,12 @@ class NeuMF(keras.Model):
         x = self.sigmoid_layer(x)
         out = self.lambda_layer(x)
 
+        return out
+
 LATENT_FEATURES = 128
-NUM_EPOCHS = 2
+NUM_EPOCHS = 20
 BATCH_SIZE = 32
-model_name = 'LMF'
+model_name = 'NeuMF'
 
 ratings_df = Preprocess.loadFile("ratings")
 
@@ -279,7 +281,7 @@ if model_name == 'LMF':
 
     model.save_weights(cp_filepath.format(epoch = 0))
 
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = 20, \
+    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
                  callbacks = [cp_callback], verbose = 1)
     model.summary()
     # model.save('Temp/collaborative.h5', save_format='tf')
@@ -341,7 +343,7 @@ elif model_name == 'MLP':
 
     model.save_weights(cp_filepath.format(epoch = 0))
 
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = 50, \
+    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
                  callbacks = [cp_callback], verbose = 1)
     model.summary()
     # model.save('Temp/collaborative.h5', save_format='tf')
@@ -379,7 +381,7 @@ elif model_name == 'NeuMF':
 
     model.save_weights(cp_filepath.format(epoch = 0))
 
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = 50, \
+    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
                  callbacks = [cp_callback], verbose = 1)
     model.summary()
     # model.save('Temp/collaborative.h5', save_format='tf')
