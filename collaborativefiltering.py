@@ -243,165 +243,165 @@ class NeuMF(keras.Model):
 
         return out
 
-LATENT_FEATURES = 128
-NUM_EPOCHS = 20
-BATCH_SIZE = 32
-model_name = 'NeuMF'
-
-ratings_df = Preprocess.loadFile("ratings")
-
-# ratings_input =  [ratings_df['userId'].to_numpy(), ratings_df['movieId'].to_numpy(), ratings_df['rating'].to_numpy()]
-users =  list(set(ratings_df['userId'].tolist()))
-movies = list(set(ratings_df['movieId'].tolist()))
-
-users_dict = {u : i for i, u in enumerate(users)}
-movies_dict = {m : i for i, m in enumerate(movies)} # Movie Id to Idx
-movies_idx_dict = {i : m for i, m in enumerate(movies)} #Idx to movie Id
-
-num_users = len(users)
-num_movies = len(movies)
-
-ratings_df['userId'] = ratings_df['userId'].apply(lambda x: users_dict[x])
-ratings_df['movieId'] = ratings_df['movieId'].apply(lambda x: movies_dict[x])
-ratings_input = [ratings_df['userId'].to_numpy(), ratings_df['movieId'].to_numpy()]
-ratings_output = ratings_df[['rating']].to_numpy()
-
-min_rating, max_rating = np.amin(ratings_df['rating'].to_numpy()), np.amax(ratings_df['rating'].to_numpy())
-
-if model_name == 'LMF':
-    model = LMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    opt = keras.optimizers.Adam(lr = 0.0003)
-    model.compile(loss = 'mean_squared_error', optimizer = opt)
-
-    ## Creating check point callback
-    cp_directory = 'Temp/collaborative/LMF/'
-    cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
-    cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
-                                        save_weights_only = True, period = 5)
-
-    model.save_weights(cp_filepath.format(epoch = 0))
-
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
-                 callbacks = [cp_callback], verbose = 1)
-    model.summary()
-    # model.save('Temp/collaborative.h5', save_format='tf')
-    print('Model saved successfully')
-
-    latest = tf.train.latest_checkpoint(cp_directory)
-    model = LMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    # Load the previously saved weights
-    model.load_weights(latest)
-    print('Model loaded successfully')
-
-    # print([(i, layer.name) for i, layer in enumerate(model.layers)])
-
-    # user_weights = model.get_layer("user_weights").get_weights()[0]
-    # movie_weights = model.get_layer("movie_weights").get_weights()[0]
-    #
-    # user_bias = model.get_layer("user_bias").get_weights()[0]
-    # movie_bias = model.get_layer("movie_bias").get_weights()[0]
-    #
-    # dp_matrix = np.dot(user_weights, np.transpose(movie_weights))
-    # dp_matrix = np.add(np.add(dp_matrix, user_bias), np.transpose(movie_bias))
-    #
-    # print(dp_matrix.shape)
-    #
-    # sigmoid =  np.vectorize(lambda x : 1/(1 + np.exp(-(x))))
-    #
-    # dp_sigmoid_matrix = sigmoid(dp_matrix)
-    # dp_scaled_matrix = dp_sigmoid_matrix * (max_rating - min_rating) + min_rating
-    #
-    # print(dp_scaled_matrix)
-
-    user_idx = 146 ## reduced by 1
-    movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
-    test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
-
-    user_ratings = model.predict(test_input).reshape(num_movies,)
-
-    # user_ratings = dp_scaled_matrix[user_idx, :]
-    print(len(user_ratings))
-    user_ratings[movies_rated] = 0.5
-    top10_list = np.argpartition(user_ratings, -10)[-10:]
-    movie_list = [movies_idx_dict[each] for each in top10_list]
-
-    # print(dp_scaled_matrix[user_idx, :])
-    print(movie_list)
-    print(movies_rated)
-    # print(dp_scaled_matrix[user_idx, :][movies_rated])
-
-elif model_name == 'MLP':
-    model = MLP(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    opt = keras.optimizers.Adam(lr = 0.0003)
-    model.compile(loss = 'mean_squared_error', optimizer = opt)
-
-    ## Creating check point callback
-    cp_directory = 'Temp/collaborative/MLP/'
-    cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
-    cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
-                                        save_weights_only = True, period = 5)
-
-    model.save_weights(cp_filepath.format(epoch = 0))
-
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
-                 callbacks = [cp_callback], verbose = 1)
-    model.summary()
-    # model.save('Temp/collaborative.h5', save_format='tf')
-    print('Model saved successfully')
-
-    latest = tf.train.latest_checkpoint(cp_directory)
-    model = MLP(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    # Load the previously saved weights
-    model.load_weights(latest)
-    print('Model loaded successfully')
-
-    user_idx = 146 ## reduced by 1
-    movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
-    test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
-
-    user_ratings = model.predict(test_input).reshape(num_movies,)
-
-    print(user_ratings.shape)
-    user_ratings[movies_rated] = 0.5
-    top10_list = np.argpartition(user_ratings, -10)[-10:]
-    movie_list = [movies_idx_dict[each] for each in top10_list]
-
-    print(movie_list)
-
-elif model_name == 'NeuMF':
-    model = NeuMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    opt = keras.optimizers.Adam(lr = 0.0003)
-    model.compile(loss = 'mean_squared_error', optimizer = opt)
-
-    ## Creating check point callback
-    cp_directory = 'Temp/collaborative/NeuMF/'
-    cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
-    cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
-                                        save_weights_only = True, period = 5)
-
-    model.save_weights(cp_filepath.format(epoch = 0))
-
-    model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
-                 callbacks = [cp_callback], verbose = 1)
-    model.summary()
-    # model.save('Temp/collaborative.h5', save_format='tf')
-    print('Model saved successfully')
-
-    latest = tf.train.latest_checkpoint(cp_directory)
-    model = NeuMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
-    # Load the previously saved weights
-    model.load_weights(latest)
-    print('Model loaded successfully')
-
-    user_idx = 146 ## reduced by 1
-    movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
-    test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
-
-    user_ratings = model.predict(test_input).reshape(num_movies,)
-
-    print(user_ratings.shape)
-    user_ratings[movies_rated] = 0.5
-    top10_list = np.argpartition(user_ratings, -10)[-10:]
-    movie_list = [movies_idx_dict[each] for each in top10_list]
-
-    print(movie_list)
+# LATENT_FEATURES = 128
+# NUM_EPOCHS = 50
+# BATCH_SIZE = 32
+# model_name = 'LMF'
+#
+# ratings_df = Preprocess.loadFile("ratings")
+#
+# # ratings_input =  [ratings_df['userId'].to_numpy(), ratings_df['movieId'].to_numpy(), ratings_df['rating'].to_numpy()]
+# users =  list(set(ratings_df['userId'].tolist()))
+# movies = list(set(ratings_df['movieId'].tolist()))
+#
+# users_dict = {u : i for i, u in enumerate(users)}
+# movies_dict = {m : i for i, m in enumerate(movies)} # Movie Id to Idx
+# movies_idx_dict = {i : m for i, m in enumerate(movies)} #Idx to movie Id
+#
+# num_users = len(users)
+# num_movies = len(movies)
+#
+# ratings_df['userId'] = ratings_df['userId'].apply(lambda x: users_dict[x])
+# ratings_df['movieId'] = ratings_df['movieId'].apply(lambda x: movies_dict[x])
+# ratings_input = [ratings_df['userId'].to_numpy(), ratings_df['movieId'].to_numpy()]
+# ratings_output = ratings_df[['rating']].to_numpy()
+#
+# min_rating, max_rating = np.amin(ratings_df['rating'].to_numpy()), np.amax(ratings_df['rating'].to_numpy())
+#
+# if model_name == 'LMF':
+#     model = LMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     opt = keras.optimizers.Adam(lr = 0.0003)
+#     model.compile(loss = 'mean_squared_error', optimizer = opt)
+#
+#     ## Creating check point callback
+#     cp_directory = 'Temp/collaborative/LMF/'
+#     cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
+#     cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
+#                                         save_weights_only = True, period = 5)
+#
+#     model.save_weights(cp_filepath.format(epoch = 0))
+#
+#     model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
+#                  callbacks = [cp_callback], verbose = 1)
+#     model.summary()
+#     # model.save('Temp/collaborative.h5', save_format='tf')
+#     print('Model saved successfully')
+#
+#     latest = tf.train.latest_checkpoint(cp_directory)
+#     model = LMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     # Load the previously saved weights
+#     model.load_weights(latest)
+#     print('Model loaded successfully')
+#
+#     # print([(i, layer.name) for i, layer in enumerate(model.layers)])
+#
+#     # user_weights = model.get_layer("user_weights").get_weights()[0]
+#     # movie_weights = model.get_layer("movie_weights").get_weights()[0]
+#     #
+#     # user_bias = model.get_layer("user_bias").get_weights()[0]
+#     # movie_bias = model.get_layer("movie_bias").get_weights()[0]
+#     #
+#     # dp_matrix = np.dot(user_weights, np.transpose(movie_weights))
+#     # dp_matrix = np.add(np.add(dp_matrix, user_bias), np.transpose(movie_bias))
+#     #
+#     # print(dp_matrix.shape)
+#     #
+#     # sigmoid =  np.vectorize(lambda x : 1/(1 + np.exp(-(x))))
+#     #
+#     # dp_sigmoid_matrix = sigmoid(dp_matrix)
+#     # dp_scaled_matrix = dp_sigmoid_matrix * (max_rating - min_rating) + min_rating
+#     #
+#     # print(dp_scaled_matrix)
+#
+#     user_idx = 146 ## reduced by 1
+#     movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
+#     test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
+#
+#     user_ratings = model.predict(test_input).reshape(num_movies,)
+#
+#     # user_ratings = dp_scaled_matrix[user_idx, :]
+#     print(len(user_ratings))
+#     user_ratings[movies_rated] = 0.5
+#     top10_list = np.argpartition(user_ratings, -10)[-10:]
+#     movie_list = [movies_idx_dict[each] for each in top10_list]
+#
+#     # print(dp_scaled_matrix[user_idx, :])
+#     print(movie_list)
+#     print(movies_rated)
+#     # print(dp_scaled_matrix[user_idx, :][movies_rated])
+#
+# elif model_name == 'MLP':
+#     model = MLP(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     opt = keras.optimizers.Adam(lr = 0.0003)
+#     model.compile(loss = 'mean_squared_error', optimizer = opt)
+#
+#     ## Creating check point callback
+#     cp_directory = 'Temp/collaborative/MLP/'
+#     cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
+#     cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
+#                                         save_weights_only = True, period = 5)
+#
+#     model.save_weights(cp_filepath.format(epoch = 0))
+#
+#     model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
+#                  callbacks = [cp_callback], verbose = 1)
+#     model.summary()
+#     # model.save('Temp/collaborative.h5', save_format='tf')
+#     print('Model saved successfully')
+#
+#     latest = tf.train.latest_checkpoint(cp_directory)
+#     model = MLP(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     # Load the previously saved weights
+#     model.load_weights(latest)
+#     print('Model loaded successfully')
+#
+#     user_idx = 146 ## reduced by 1
+#     movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
+#     test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
+#
+#     user_ratings = model.predict(test_input).reshape(num_movies,)
+#
+#     print(user_ratings.shape)
+#     user_ratings[movies_rated] = 0.5
+#     top10_list = np.argpartition(user_ratings, -10)[-10:]
+#     movie_list = [movies_idx_dict[each] for each in top10_list]
+#
+#     print(movie_list)
+#
+# elif model_name == 'NeuMF':
+#     model = NeuMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     opt = keras.optimizers.Adam(lr = 0.0003)
+#     model.compile(loss = 'mean_squared_error', optimizer = opt)
+#
+#     ## Creating check point callback
+#     cp_directory = 'Temp/collaborative/NeuMF/'
+#     cp_filepath = cp_directory + 'cp-{epoch:04d}.ckpt'
+#     cp_callback = keras.callbacks.ModelCheckpoint(filepath = cp_filepath, verbose = 1, \
+#                                         save_weights_only = True, period = 5)
+#
+#     model.save_weights(cp_filepath.format(epoch = 0))
+#
+#     model.fit(x = ratings_input, y = ratings_output, batch_size = BATCH_SIZE, epochs = NUM_EPOCHS, \
+#                  callbacks = [cp_callback], verbose = 1)
+#     model.summary()
+#     # model.save('Temp/collaborative.h5', save_format='tf')
+#     print('Model saved successfully')
+#
+#     latest = tf.train.latest_checkpoint(cp_directory)
+#     model = NeuMF(num_users, num_movies, LATENT_FEATURES, min_rating, max_rating)
+#     # Load the previously saved weights
+#     model.load_weights(latest)
+#     print('Model loaded successfully')
+#
+#     user_idx = 146 ## reduced by 1
+#     movies_rated = list(ratings_df[ratings_df['userId'] == user_idx]['movieId'])
+#     test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
+#
+#     user_ratings = model.predict(test_input).reshape(num_movies,)
+#
+#     print(user_ratings.shape)
+#     user_ratings[movies_rated] = 0.5
+#     top10_list = np.argpartition(user_ratings, -10)[-10:]
+#     movie_list = [movies_idx_dict[each] for each in top10_list]
+#
+#     print(movie_list)
