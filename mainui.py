@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import streamlit as st
 
 from preprocess import Preprocess
@@ -9,7 +11,7 @@ from utilities import Util
 from contentfiltering import ContentFilter
 from collaborativefiltering import NeuMF, LMF, MLP
 
-st.title('My first app')
+st.title('Recommendation System')
 
 ## Loading the data files
 @st.cache
@@ -34,13 +36,40 @@ def loadData():
 
     return movies_df, ratings_df, final_vector_df, embeddings_matrix, embedding_movie_list, ratings_df2, users, movies, users_dict, movies_dict, movies_idx_dict
 
+
+def createImageGrid(movies_list, movies_df):
+    fig, ax = plt.subplots(2, 5, figsize=(30, 30))
+
+    for i, each in enumerate(movies_list):
+        ax[i//5, i%5].imshow(mpimg.imread('Images/{}.jpg'.format(each)))
+        ax[i//5, i%5].set_xticks([])
+        ax[i//5, i%5].set_yticks([])
+        ax[i//5, i%5].title.set_text(movies_df[movies_df['movieId'] == each]['title'].to_numpy()[0])
+        ax[i//5, i%5].title.set_size(18)
+
+    plt.tight_layout()
+    # plt.subplots_adjust(wspace =.05, hspace =.05)
+    return plt
+
 data_load_state = st.text('Creating a synthetic user and his movie history...')
 movies_df, ratings_df, final_vector_df, embeddings_matrix, embedding_movie_list, ratings_df2, users, movies, users_dict, movies_dict, movies_idx_dict = loadData()
 
 num_users = len(users)
 num_movies = len(movies)
 
-RANDOM_USER_ID = np.random.randint(0, len(ratings_df['userId'].unique()))
+RANDOM_USER_ID = 1#np.random.randint(0, len(ratings_df['userId'].unique()))
+
+st.sidebar.markdown('To create a random user profile, press the button')
+
+if st.sidebar.button('Create Random User'):
+    RANDOM_USER_ID = np.random.randint(0, len(ratings_df['userId'].unique()))
+
+st.sidebar.markdown('**Content Checkboxes**')
+st.sidebar.markdown('Check/Uncheck the checkbox to see/hide the data frame and the image grid')
+
+df_checkbox = st.sidebar.checkbox('Show DataFrame', 1)
+ig_checkbox = st.sidebar.checkbox('Show ImageGrid')
+
 LATENT_FEATURES = 128
 
 ## ########################### Content Filtering #######################
@@ -93,16 +122,34 @@ data_load_state.text('Created synthetic user and his movie history...done!')
 
 
 st.subheader('Movies already watched by the user')
-movies_watched_df = movies_df[movies_df['movieId'].isin(movies_watched_list)]
-st.write(movies_watched_df)
+movies_watched_df = movies_df[movies_df['movieId'].isin(movies_watched_list)][['title', 'genres']]
+
+if df_checkbox:
+    st.write(movies_watched_df)
+
+if ig_checkbox:
+    movies_watched_plot = createImageGrid(movies_watched_list, movies_df)
+    st.pyplot(movies_watched_plot)
 print(movies_df[movies_df['movieId'].isin(movies_watched_list)])
 
 st.subheader('Movies recommended by content filtering')
-movies_rec_content_df = movies_df[movies_df['movieId'].isin(content_movie_list)]
-st.write(movies_rec_content_df)
+movies_rec_content_df = movies_df[movies_df['movieId'].isin(content_movie_list)][['title', 'genres']]
+
+if df_checkbox:
+    st.write(movies_rec_content_df)
+
+if ig_checkbox:
+    movies_rec_content_plot = createImageGrid(content_movie_list, movies_df)
+    st.pyplot(movies_rec_content_plot)
 print(movies_df[movies_df['movieId'].isin(content_movie_list)])
 
 st.subheader('Movies recommended by collaborative filtering')
-movies_rec_collaborative_df = movies_df[movies_df['movieId'].isin(collaborative_movie_list)]
-st.write(movies_rec_collaborative_df)
+movies_rec_collaborative_df = movies_df[movies_df['movieId'].isin(collaborative_movie_list)][['title', 'genres']]
+
+if df_checkbox:
+    st.write(movies_rec_collaborative_df)
+
+if ig_checkbox:
+    movies_rec_collaborative_plot = createImageGrid(collaborative_movie_list, movies_df)
+    st.pyplot(movies_rec_collaborative_plot)
 print(movies_df[movies_df['movieId'].isin(collaborative_movie_list)])
