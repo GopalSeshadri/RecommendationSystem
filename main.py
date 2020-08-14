@@ -28,31 +28,31 @@ tags_grouped_df = movies2_df.iloc[:][['movieId', 'tag']]
 print(tags_grouped_df.head())
 print(tags_grouped_df.shape)
 
-# ## calculating the TFIDF matrix
-# tfidf_df = Preprocess.createTFIDFMatrix(tags_grouped_df)
-# print(tfidf_df.shape)
-#
-# ## dumping the tfidf matrix
-# Util.saveObj(tfidf_df, 'tfidf_df')
-
-## loading the TFIDF matrix
-tfidf_df =  Util.loadObj('tfidf_df')
+## calculating the TFIDF matrix
+tfidf_df = Preprocess.createTFIDFMatrix(tags_grouped_df)
 print(tfidf_df.shape)
+
+## dumping the tfidf matrix
+Util.saveObj(tfidf_df, 'tfidf_df')
+
+# ## loading the TFIDF matrix
+# tfidf_df =  Util.loadObj('tfidf_df')
+# print(tfidf_df.shape)
 
 ## loading the reduced TFIDF matrix
 tfidf_reduced_df =  Util.loadObj('tfidf_reduced_df')
 print(tfidf_reduced_df.shape)
 
-# ## creating vector df with spacy sentence vector
-# vector_df = createSentenceVector(imdb_df)
-# print(vector_df.shape)
-#
-# ## dumping the vector df
-# Util.saveObj(vector_df, 'vector_df')
-
-## loading vector df
-vector_df =  Util.loadObj('vector_df')
+## creating vector df with spacy sentence vector
+vector_df = createSentenceVector(imdb_df)
 print(vector_df.shape)
+
+## dumping the vector df
+Util.saveObj(vector_df, 'vector_df')
+
+# ## loading vector df
+# vector_df =  Util.loadObj('vector_df')
+# print(vector_df.shape)
 
 ## merging tfidf reduced df and vector df
 vector_df['movieId'] = vector_df['movieId'].apply(lambda x : int(x))
@@ -64,17 +64,9 @@ print(final_vector_df.isna().sum())
 ## dumping the final vector df
 Util.saveObj(final_vector_df, 'final_vector_df')
 
-# print(True if 46855 in vector_df['movieId'].tolist() else False)
-# print(True if 46855 in tfidf_reduced_df['movieId'].tolist() else False)
-# print(True if 46855 in tfidf_df.index.tolist() else False)
-# print(True if 46855 in tags_grouped_df['movieId'].tolist() else False)
 
 print(movies_df[movies_df['movieId'].isin([5, 151, 163, 168, 186, 225, 315, 342, 466, 543, 552, 555, 596, 1234, 1376, 1396, 1639, 2302, 2395, 2699])])
 
-## 720 1107 2377 86668 176601
-
-## 5, 151, 163, 168, 186, 225, 315, 342, 466, 543, 552, 555, 596, 1234, 1376, 1396, 1639, 2302, 2395, 2699
-## 183611, 6583, 40851, 9010, 6979, 1625, 102590, 6790, 179401, 2
 
 ## getting user rating history
 movies_watched_list = ratings_df[ratings_df['userId'] == 147]['movieId'].tolist()
@@ -100,9 +92,7 @@ movie_600_final = np.sum(movie_600_list, axis = 0)
 embeddings = Util.loadObj('final_vector_df')
 embeddings_matrix =  embeddings.loc[:, embeddings.columns != 'movieId']
 embedding_movie_list = embeddings['movieId'].tolist()
-print(embeddings.shape)
-print(embeddings_matrix.shape)
-# print(embeddings.isna().sum())
+
 current = [movie_600_final]
 cf = ContentFilter(embeddings_matrix, current)
 top10_list = cf.getTop10().tolist()
