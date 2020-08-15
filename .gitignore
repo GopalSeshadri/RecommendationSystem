@@ -48,11 +48,11 @@ nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
+*.jpg
 .hypothesis/
 .pytest_cache/
 Data/
 Temp/
-Images/
 
 # Translations
 *.mo
