@@ -7,6 +7,9 @@ from preprocess import Preprocess
 from utilities import Util
 
 class LambdaLayer(keras.layers.Layer):
+    '''
+    A keras custom layer class to create a layer to rescale the output with in the range 0.5 to 5.
+    '''
     def __init__(self, min_rating, max_rating, **kwargs):
         super(LambdaLayer, self).__init__(**kwargs)
         self.min_rating = min_rating
@@ -22,6 +25,9 @@ class LambdaLayer(keras.layers.Layer):
         return config
 
 class LMF(keras.Model):
+    '''
+    A keras model to implement the Linear Matrix Factorization model.
+    '''
     def __init__(self, num_users, num_movies, num_latent, min_rating, max_rating):
         super(LMF, self).__init__(name = 'LMF')
         self.num_users = num_users
@@ -74,6 +80,9 @@ class LMF(keras.Model):
         return out
 
 class MLP(keras.Model):
+    '''
+    A keras model to implement the Multilayer Perceptron model.
+    '''
     def __init__(self, num_users, num_movies, num_latent, min_rating, max_rating):
         super(MLP, self).__init__(name = 'MLP')
 
@@ -110,7 +119,6 @@ class MLP(keras.Model):
         self.lambda_layer = LambdaLayer(min_rating, max_rating)
 
     def call(self, inputs, training = False):
-        print(training)
         users, movies = inputs[0], inputs[1]
 
         # ui = self.user_input(users)
@@ -144,6 +152,9 @@ class MLP(keras.Model):
         return out
 
 class NeuMF(keras.Model):
+    '''
+    A keras model to implement the Neural Matrix Factorization model, a combination of above two models.
+    '''
     def __init__(self, num_users, num_movies, num_latent, min_rating, max_rating):
         super(NeuMF, self).__init__(name = 'NeuMF')
 
@@ -233,8 +244,6 @@ class NeuMF(keras.Model):
         mlp_x = self.mlp_third_dense_layer(mlp_x)
         mlp_x = self.sigmoid_layer(mlp_x)
 
-        print(lmf_x.shape)
-        print(mlp_x.shape)
         ## concatenating both channels
         x = self.concatenate_layer([lmf_x, mlp_x])
         x = self.final_dense_layer(x)

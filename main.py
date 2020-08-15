@@ -97,10 +97,3 @@ current = [movie_600_final]
 cf = ContentFilter(embeddings_matrix, current)
 top10_list = cf.getTop10().tolist()
 movie_list = [embedding_movie_list[each] for each in top10_list]
-print(movie_list)
-
-print(movies_df[movies_df['movieId'].isin(movie_list)])
-
-movie_list2 = [29, 260, 750, 223, 3671, 1198, 2000, 4993, 1967, 55820]
-
-print(movies_df[movies_df['movieId'].isin(movie_list2)])

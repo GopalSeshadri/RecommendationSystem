@@ -9,6 +9,9 @@ tf.keras.backend.set_floatx('float64')
 print(tf.__version__)
 
 class AutoEncoder(keras.Model):
+    '''
+    A simple keras model to create an autoencoder to compress the TFIDF vectors to 300 dimensions.
+    '''
     def __init__(self, output_features):
         super(AutoEncoder, self).__init__(name = 'auto_encoder')
         self.dropout_layer = keras.layers.Dropout(rate=0.1)

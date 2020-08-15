@@ -16,6 +16,10 @@ st.title('Recommendation System')
 ## Loading the data files
 @st.cache
 def loadData():
+    '''
+    This function loads the data from various data files and does the basic preprocessing.
+    Created to leverage the power of streamlit cache.
+    '''
     movies_df = Preprocess.loadFile("movies")
     ratings_df = Preprocess.loadFile("ratings")
     final_vector_df = Util.loadObj('final_vector_df')
@@ -38,6 +42,16 @@ def loadData():
 
 
 def createImageGrid(movies_list, movies_df):
+    '''
+    This function creates a 2x5 Image Grid to display the movie pictures and it's title in the webpage.
+
+    Parameters:
+    movies_list (list)    : A list of movies to be displayed
+    movies_df (DataFrame) : The movies dataframe with all movies in the data.
+
+    Returns:
+    fig (figure) : Image grid with 10 movie pictures and title.
+    '''
     fig, ax = plt.subplots(2, 5, figsize=(30, 30))
 
     for i, each in enumerate(movies_list):
@@ -49,7 +63,7 @@ def createImageGrid(movies_list, movies_df):
 
     plt.tight_layout()
     # plt.subplots_adjust(wspace =.05, hspace =.05)
-    return plt
+    return fig
 
 data_load_state = st.text('Creating a synthetic user and his movie history...')
 movies_df, ratings_df, final_vector_df, embeddings_matrix, embedding_movie_list, ratings_df2, users, movies, users_dict, movies_dict, movies_idx_dict = loadData()
@@ -111,6 +125,8 @@ model.load_weights(latest)
 print('Model loaded successfully')
 
 user_idx = users_dict[RANDOM_USER_ID]
+
+## Creating the test input for the random user and all movies in the data
 test_input = [np.array([user_idx] * num_movies), np.array(list(range(num_movies)))]
 user_ratings = model.predict(test_input).reshape(num_movies,)
 

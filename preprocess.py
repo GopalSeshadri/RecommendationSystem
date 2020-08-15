@@ -12,7 +12,7 @@ nlp = spacy.load("en_core_web_md")
 
 class Preprocess:
 
-    def loadFile(filename: str):
+    def loadFile(filename):
         '''
         This function takes in a file name and loads it's content to a DataFrame.
 
@@ -26,7 +26,7 @@ class Preprocess:
         df = pd.read_csv('Data/{}.csv'.format(filename))
         return df
 
-    def groupMovieTags(data: pd.DataFrame):
+    def groupMovieTags(data):
         '''
         This function takes in the tags DataFrame and returns the data grouped by movieId.
 
@@ -41,7 +41,7 @@ class Preprocess:
         data_grouped = data.groupby('movieId')['tag'].apply(lambda x: ' '.join(x).lower()).reset_index()
         return data_grouped
 
-    def createTFIDFMatrix(data: pd.DataFrame):
+    def createTFIDFMatrix(data):
         '''
         This function takes in the tags DataFrame grouped by movieId and returns a
         TFIDF matrix fitted on grouped tags.
@@ -60,14 +60,31 @@ class Preprocess:
         return tfidf_df
 
     def preprocessImdbFile():
-        filename = '\Data\imdb.csv'
+        '''
+        This function reads in the imdb.csv file and returns a dataframe with added
+        column headers and index.
+
+        Returns:
+        df (DataFrame) : The Imdb Data Frame.
+        '''
+        filename = 'Data/imdb.csv'
         df = pd.read_csv('Data/imdb.csv'.format(filename))
         df.columns = ['index', 'movieId', 'title', 'oneLiner', 'director', 'cast1', 'cast2', 'cast3']
         df.set_index('index', inplace = True)
         df.to_csv('Data/imdb.csv')
         return df
 
-    def createSentenceVector(data: pd.DataFrame):
+    def createSentenceVector(data):
+        '''
+        This function takes in the imdb.csv file and returns a dataframe with spacy vectors for
+        each movies.
+
+        Parameters:
+        data (DataFrame) : The Imdb Data Frame.
+
+        Returns:
+        vector_df (DataFrame) : The data frame with spacy vectors.
+        '''
         sentences = data['oneLiner'].tolist()
         stopwords = nlp.Defaults.stop_words
         sentence_dict = {}

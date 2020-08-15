@@ -8,7 +8,23 @@ from collaborativefiltering import NeuMF, LMF, MLP
 ## This file has the helper function for collaborative filtering
 ## This include the train test splitter and the metric
 class Helpers:
+    '''
+    This class has functions to evalaute the performance of the collaborative filtering models.
+    '''
     def createTrainTestData(data, num_movies):
+        '''
+        This function creates a train and test set from the re-indexed ratings dataframe.
+        In training set, for each user the last rated movie was held back from the training set.
+        In testing set, this last rated movie for each user is added along with 99 random user movie pairs.
+
+        Parameters:
+        data (DataFrame) : The re-indexed ratings data frame.
+        num_movies (int) : The number of movies in the dataset.
+
+        Returns:
+        train_data (DataFrame) : The re-indexed training set from ratings data.
+        test_data (DataFrame)  : The re-indexed testing set from ratings data.
+        '''
         ## taking the last record for each user
         last_data = data.groupby('userId').last().reset_index()
 
@@ -31,6 +47,19 @@ class Helpers:
         return train_data, test_data
 
     def topAtKMetric(test_data, K, num_users, model):
+        '''
+        This function calculate the topAtKMetric, which is the proportion of times the last actually watched movie
+        of each user is recommended by the model within top K entries.
+
+        Parameters:
+        test_data (DataFrame) : The re-indexed ratings test data.
+        K (int)               : The K value to consider in top K metric.
+        num_users (int)       : The number of users in the dataset.
+        model (Keras Model)   : A keras model. It can be any one of these implementations NeuMF, LMF, or MLP.
+
+        Returns:
+        topAtKScore (float)   : The topAtKScore, a value between 0 and 1.
+        '''
         count = 0
         for user_id in range(0, num_users):
             temp_data = test_data[test_data['userId'] == user_id]
@@ -45,7 +74,9 @@ class Helpers:
             if already_watched in topK_movie_list:
                 count += 1
 
-        return count/num_users
+        topAtKScore = count/num_users
+
+        return topAtKScore
 
 
 # LATENT_FEATURES = 128
