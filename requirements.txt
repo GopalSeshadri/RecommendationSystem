@@ -145,7 +145,7 @@ tornado==6.0.3
 tqdm==4.47.0
 traitlets==4.3.3
 tzlocal==2.1
-urllib3==1.25.9
+urllib3==1.26.5
 validators==0.17.1
 virtualenv==20.0.30
 wasabi==0.7.1
