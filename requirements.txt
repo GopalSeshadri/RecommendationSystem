@@ -129,7 +129,7 @@ SoundFile==0.10.2
 soupsieve==2.0.1
 spacy==2.3.2
 srsly==1.0.2
-streamlit==0.64.0
+streamlit==1.11.1
 tensorboard==2.2.2
 tensorboard-plugin-wit==1.7.0
 tensorflow==2.2.0
